@@ -1,0 +1,8 @@
+{
+  "$composer": {
+    "redis": {
+      "uri": "rediss://admin:pwd@xxx.databases.appdomain.cloud:32495/0",
+      "ca": "myCert"
+    }
+  }
+}

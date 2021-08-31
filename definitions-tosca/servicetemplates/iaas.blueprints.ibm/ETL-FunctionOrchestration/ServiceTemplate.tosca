@@ -1,0 +1,268 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+metadata:
+  targetNamespace: "iaas.blueprints.ibm"
+topology_template:
+  node_templates:
+    IbmPlatform_0:
+      type: iaas.nodes.ibm.IbmPlatform
+      metadata:
+        x: "1074"
+        y: "680"
+        displayName: "IbmPlatform"
+      properties:
+        resource_group: "default-rg"
+        cos_crn: "crn:v1:bluemix:public:cloud-object-storage:global:a/2cff051ad2374d249b7241785f4fe1ae:495cca22-66f6-4ffe-adce-fae02eb1292a::"
+        name: "IBM"
+        region: "eu-de"
+    IbmMQQueue_0:
+      type: iaas.nodes.ibm.IbmMQQueue
+      metadata:
+        x: "1700"
+        y: "436"
+        displayName: "MQQueue"
+      properties:
+        name: "DEV.Q1"
+      requirements:
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_7
+            capability: host
+    IbmCloudFunction_4:
+      type: iaas.nodes.ibm.IbmCloudFunction
+      metadata:
+        x: "1408"
+        y: "322"
+        displayName: "Notify"
+      properties:
+        handler: "main"
+        memory: 256
+        function_parameters: { get_artifact: [ SELF, Notifyparams ] }
+        name: "Notify"
+        namespace: "default-actions"
+        runtime: "python:3.7"
+        zip_file: { get_artifact: [ SELF, Notify ] }
+        timeout: 60000
+      requirements:
+        - endpoint:
+            node: IbmMQQueue_0
+            relationship: con_ConnectsTo_3
+            capability: queue_endpoint
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_5
+            capability: host
+      artifacts:
+        Notify:
+          type: iaas.artifacts.Zip
+          file: Notify.zip
+        Notifyparams:
+          type: tosca.artifacts.File
+          file: Notifyparams.json
+    IbmCloudFunction_3:
+      type: iaas.nodes.ibm.IbmCloudFunction
+      metadata:
+        x: "717"
+        y: "449"
+        displayName: "CleanUp"
+      properties:
+        handler: "main"
+        memory: 256
+        function_parameters: "none"
+        name: "CleanUp"
+        namespace: "default-actions"
+        runtime: "python:3.7"
+        zip_file: { get_artifact: [ SELF, CleanUp ] }
+        timeout: 60000
+      requirements:
+        - endpoint:
+            node: IbmObjectStorageBucket_0
+            relationship: con_ConnectsTo_2
+            capability: storage_endpoint
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_3
+            capability: host
+      artifacts:
+        CleanUp:
+          type: iaas.artifacts.Zip
+          file: CleanUp.zip
+    IbmCloudFunction_2:
+      type: iaas.nodes.ibm.IbmCloudFunction
+      metadata:
+        x: "722"
+        y: "357"
+        displayName: "AggregateData"
+      properties:
+        handler: "main"
+        memory: 512
+        function_parameters: "none"
+        name: "AggregateData"
+        namespace: "default-actions"
+        runtime: "python:3.7"
+        zip_file: { get_artifact: [ SELF, AggregateData ] }
+        timeout: 900000
+      requirements:
+        - endpoint:
+            node: IbmObjectStorageBucket_0
+            relationship: con_ConnectsTo_1
+            capability: storage_endpoint
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_2
+            capability: host
+      artifacts:
+        AggregateData:
+          type: iaas.artifacts.Zip
+          file: AggregateData.zip
+    IbmCloudFunction_1:
+      type: iaas.nodes.ibm.IbmCloudFunction
+      metadata:
+        x: "725"
+        y: "260"
+        displayName: "TransformData"
+      properties:
+        handler: "main"
+        memory: 1024
+        function_parameters: "none"
+        name: "TransformData"
+        namespace: "default-actions"
+        runtime: "python:3.7"
+        zip_file: { get_artifact: [ SELF, TransformData ] }
+        timeout: 900000
+      requirements:
+        - endpoint:
+            node: IbmObjectStorageBucket_0
+            relationship: con_ConnectsTo_0
+            capability: storage_endpoint
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_1
+            capability: host
+      artifacts:
+        TransformData:
+          type: iaas.artifacts.Zip
+          file: TransformData.zip
+    IbmCloudFunction_0:
+      type: iaas.nodes.ibm.IbmCloudFunction
+      metadata:
+        x: "723"
+        y: "164"
+        displayName: "ListFiles"
+      properties:
+        handler: "main"
+        memory: 256
+        function_parameters: "none"
+        name: "ListFiles"
+        namespace: "default-actions"
+        runtime: "python:3.7"
+        zip_file: { get_artifact: [ SELF, ListFiles ] }
+        timeout: 60000
+      requirements:
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_0
+            capability: host
+      artifacts:
+        ListFiles:
+          type: iaas.artifacts.Zip
+          file: ListFiles.zip
+    IbmComposerOrchestration_0:
+      type: iaas.nodes.ibm.IbmComposerOrchestration
+      metadata:
+        x: "342"
+        y: "527"
+        displayName: "IbmComposerOrchestration"
+      properties:
+        memory: 512
+        workflow: { get_artifact: [ SELF, ETL ] }
+        function_parameters: { get_artifact: [ SELF, ETLparams ] }
+        name: "ETL_OpenAQ"
+        namespace: "default-actions"
+        runtime: "nodejs:12"
+        schedule_expression: "*/5 * * * *"
+        timeout: 900000
+      requirements:
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_6
+            capability: host
+        - orchestrator:
+            node: IbmCloudFunction_0
+            relationship: con_IbmComposerOrchestrates_0
+            capability: orchestrated
+        - orchestrator:
+            node: IbmCloudFunction_1
+            relationship: con_IbmComposerOrchestrates_1
+            capability: orchestrated
+        - orchestrator:
+            node: IbmCloudFunction_2
+            relationship: con_IbmComposerOrchestrates_2
+            capability: orchestrated
+        - orchestrator:
+            node: IbmCloudFunction_3
+            relationship: con_IbmComposerOrchestrates_3
+            capability: orchestrated
+      artifacts:
+        ETLparams:
+          type: tosca.artifacts.File
+          file: ETLparams.json
+        ETL:
+          type: tosca.artifacts.File
+          file: main-orchestrator.js
+    IbmObjectStorageBucket_0:
+      type: iaas.nodes.ibm.IbmObjectStorageBucket
+      metadata:
+        x: "1114"
+        y: "225"
+        displayName: "ObjectStorageBucket"
+      properties:
+        size: "0 MB"
+        name: "openaq-output"
+        maxsize: 5000
+      requirements:
+        - host:
+            node: IbmPlatform_0
+            relationship: con_HostedOn_4
+            capability: host
+        - invoker:
+            node: IbmCloudFunction_4
+            relationship: con_IbmCOSTriggers_0
+            capability: invocable
+  relationship_templates:
+    con_HostedOn_2:
+      type: tosca.relationships.HostedOn
+    con_HostedOn_3:
+      type: tosca.relationships.HostedOn
+    con_HostedOn_0:
+      type: tosca.relationships.HostedOn
+    con_HostedOn_1:
+      type: tosca.relationships.HostedOn
+    con_IbmComposerOrchestrates_0:
+      type: iaas.relationships.ibm.IbmComposerOrchestrates
+    con_IbmCOSTriggers_0:
+      type: iaas.relationships.ibm.IbmCOSTriggers
+      properties:
+        events: "write"
+    con_HostedOn_6:
+      type: tosca.relationships.HostedOn
+    con_IbmComposerOrchestrates_3:
+      type: iaas.relationships.ibm.IbmComposerOrchestrates
+    con_HostedOn_7:
+      type: tosca.relationships.HostedOn
+    con_HostedOn_4:
+      type: tosca.relationships.HostedOn
+    con_IbmComposerOrchestrates_2:
+      type: iaas.relationships.ibm.IbmComposerOrchestrates
+    con_IbmComposerOrchestrates_1:
+      type: iaas.relationships.ibm.IbmComposerOrchestrates
+    con_HostedOn_5:
+      type: tosca.relationships.HostedOn
+    con_ConnectsTo_2:
+      type: tosca.relationships.ConnectsTo
+    con_ConnectsTo_3:
+      type: tosca.relationships.ConnectsTo
+    con_ConnectsTo_0:
+      type: tosca.relationships.ConnectsTo
+    con_ConnectsTo_1:
+      type: tosca.relationships.ConnectsTo

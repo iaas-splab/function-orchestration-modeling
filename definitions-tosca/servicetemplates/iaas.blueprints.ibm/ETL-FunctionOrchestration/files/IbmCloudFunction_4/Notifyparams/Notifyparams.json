@@ -1,0 +1,6 @@
+{
+"HOST": "web-qmanager-1234.qm.eu-de.mq.appdomain.cloud",
+"QUEUE_MANAGER": "QManager",
+"QUEUE_NAME": "DEV.Q1",
+"BASIC_AUTH_STRING": "MyAuthString"
+}

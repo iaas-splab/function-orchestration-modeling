@@ -1,0 +1,311 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+metadata:
+  targetNamespace: "iaas.blueprints.azure"
+topology_template:
+  node_templates:
+    AzurePlatform_0:
+      type: iaas.nodes.azure.AzurePlatform
+      metadata:
+        x: "1193"
+        y: "720"
+        displayName: "AzurePlatform"
+      properties:
+        account_type: "Standard_RAGRS"
+        storage_kind: "StorageV2"
+        resource_group: "mytestresgrouptosca"
+        name: "Azure"
+        access_tier: "Hot"
+        storage_account: "myteststorageacctosca"
+        region: "germanywestcentral"
+    AzureFunctionApp_0:
+      type: iaas.nodes.azure.AzureFunctionApp
+      metadata:
+        x: "677"
+        y: "616"
+        displayName: "DurableFunctionsApp"
+      properties:
+        dependencies_zip: { get_artifact: [ SELF, dep ] }
+        runtime_version: 3.7
+        name: "ETLOpenAQFunctionApp"        
+        runtime: "python"
+        host_file: { get_artifact: [ SELF, host ] }
+      requirements:
+        - grouping:
+            node: AzureClientFunction_0
+            relationship: con_Groups_0
+            capability: grouped
+        - grouping:
+            node: AzureOrchestratingFunction_0
+            relationship: con_Groups_1
+            capability: grouped
+        - grouping:
+            node: AzureActivityFunction_0
+            relationship: con_Groups_2
+            capability: grouped
+        - grouping:
+            node: AzureActivityFunction_1
+            relationship: con_Groups_3
+            capability: grouped
+        - grouping:
+            node: AzureActivityFunction_2
+            relationship: con_Groups_4
+            capability: grouped
+        - grouping:
+            node: AzureActivityFunction_3
+            relationship: con_Groups_5
+            capability: grouped
+        - host:
+            node: AzurePlatform_0
+            relationship: con_HostedOn_0
+            capability: host
+      artifacts:
+        host:
+          type: tosca.artifacts.File
+          file: host.json
+        dep:
+          type: tosca.artifacts.File
+          file: dep.zip
+    AzureClientFunction_0:
+      type: iaas.nodes.azure.durablefunctions.AzureClientFunction
+      metadata:
+        x: "353"
+        y: "471"
+        displayName: "MainOrchestratorStarter"
+      properties:
+        name: "MainOrchestratorStarter"
+        zip_file: { get_artifact: [ SELF, code ] }
+        functionapp_name: "ETLOpenAQFunctionApp"
+      requirements:
+        - invoker:
+            node: AzureOrchestratingFunction_0
+            relationship: con_AzureDFClientFunctionTriggers_0
+            capability: invocable
+      artifacts:
+        code:
+          type: iaas.artifacts.Zip
+          file: MainOrchestratorStarter.zip
+    AzureBlobStorageContainer_0:
+      type: iaas.nodes.azure.AzureBlobStorageContainer
+      metadata:
+        x: "1364"
+        y: "170"
+        displayName: "BlobStorageContainer"
+      properties:
+        size: "0 MB"
+        name: "openaq-output"
+        maxsize: 512
+      requirements:
+        - host:
+            node: AzurePlatform_0
+            relationship: con_HostedOn_1
+            capability: host
+        - invoker:
+            node: AzureFunction_0
+            relationship: con_AzureBlobContainerTriggers_0
+            capability: invocable
+    AzureFunctionApp_1:
+      type: iaas.nodes.azure.AzureFunctionApp
+      metadata:
+        x: "1553"
+        y: "487"
+        displayName: "NotificationFunctionApp"
+      properties:
+        dependencies_zip: { get_artifact: [ SELF, dep ] }
+        runtime_version: 3.7
+        name: "NotifyFunctionApp"
+        runtime: "python"
+        host_file: { get_artifact: [ SELF, host ] }        
+      requirements:
+        - grouping:
+            node: AzureFunction_0
+            relationship: con_Groups_6
+            capability: grouped
+        - host:
+            node: AzurePlatform_0
+            relationship: con_HostedOn_2
+            capability: host
+      artifacts:
+        host:
+          type: tosca.artifacts.File
+          file: host.json
+        dep:
+          type: tosca.artifacts.File
+          file: dep.zip
+    AzureOrchestratingFunction_0:
+      type: iaas.nodes.azure.durablefunctions.AzureOrchestratingFunction
+      metadata:
+        x: "395"
+        y: "225"
+        displayName: "MainOrchestrator"
+      properties:
+        name: "MainOrchestrator"
+        zip_file: { get_artifact: [ SELF, code ] }
+        functionapp_name: "ETLOpenAQFunctionApp"
+      requirements:
+        - orchestrator:
+            node: AzureActivityFunction_0
+            relationship: con_AzureDFOrchestrates_0
+            capability: orchestrated
+        - orchestrator:
+            node: AzureActivityFunction_1
+            relationship: con_AzureDFOrchestrates_1
+            capability: orchestrated
+        - orchestrator:
+            node: AzureActivityFunction_2
+            relationship: con_AzureDFOrchestrates_2
+            capability: orchestrated
+        - orchestrator:
+            node: AzureActivityFunction_3
+            relationship: con_AzureDFOrchestrates_3
+            capability: orchestrated
+      artifacts:
+        code:
+          type: iaas.artifacts.Zip
+          file: MainOrchestrator.zip
+    AzureStorageQueue_0:
+      type: iaas.nodes.azure.AzureStorageQueue
+      metadata:
+        x: "1865"
+        y: "543"
+        displayName: "StorageQueue"
+      properties:
+        name: "results-queue"
+      requirements:
+        - host:
+            node: AzurePlatform_0
+            relationship: con_HostedOn_3
+            capability: host
+    AzureFunction_0:
+      type: iaas.nodes.azure.AzureFunction
+      metadata:
+        x: "1554"
+        y: "316"
+        displayName: "Notify"
+      properties:
+        name: "Notify"
+        zip_file: { get_artifact: [ SELF, code ] }
+        functionapp_name: "NotifyFunctionApp"
+      requirements:
+        - endpoint:
+            node: AzureStorageQueue_0
+            relationship: con_ConnectsTo_0
+            capability: queue_endpoint
+      artifacts:
+        code:
+          type: iaas.artifacts.Zip
+          file: Notify.zip
+    AzureActivityFunction_2:
+      type: iaas.nodes.azure.durablefunctions.AzureActivityFunction
+      metadata:
+        x: "997"
+        y: "280"
+        displayName: "AggregateData"
+      properties:
+        name: "AggregateData"
+        zip_file: { get_artifact: [ SELF, code ] }
+        functionapp_name: "ETLOpenAQFunctionApp"
+      requirements:
+        - endpoint:
+            node: AzureBlobStorageContainer_0
+            relationship: con_ConnectsTo_2
+            capability: storage_endpoint
+      artifacts:
+        code:
+          type: iaas.artifacts.Zip
+          file: AggregateData.zip
+    AzureActivityFunction_3:
+      type: iaas.nodes.azure.durablefunctions.AzureActivityFunction
+      metadata:
+        x: "996"
+        y: "360"
+        displayName: "CleanUp"
+      properties:
+        name: "CleanUp"
+        zip_file: { get_artifact: [ SELF, code ] }
+        functionapp_name: "ETLOpenAQFunctionApp"
+      requirements:
+        - endpoint:
+            node: AzureBlobStorageContainer_0
+            relationship: con_ConnectsTo_3
+            capability: storage_endpoint
+      artifacts:
+        code:
+          type: iaas.artifacts.Zip
+          file: CleanUp.zip
+    AzureActivityFunction_0:
+      type: iaas.nodes.azure.durablefunctions.AzureActivityFunction
+      metadata:
+        x: "990"
+        y: "133"
+        displayName: "ListFiles"
+      properties:
+        name: "ListFiles"
+        zip_file: { get_artifact: [ SELF, code ] }
+        functionapp_name: "ETLOpenAQFunctionApp"
+      artifacts:
+        code:
+          type: iaas.artifacts.Zip
+          file: ListFiles.zip
+    AzureActivityFunction_1:
+      type: iaas.nodes.azure.durablefunctions.AzureActivityFunction
+      metadata:
+        x: "994"
+        y: "207"
+        displayName: "TransformData"
+      properties:
+        name: "TransformData"
+        zip_file: { get_artifact: [ SELF, code ] }
+        functionapp_name: "ETLOpenAQFunctionApp"
+      requirements:
+        - endpoint:
+            node: AzureBlobStorageContainer_0
+            relationship: con_ConnectsTo_1
+            capability: storage_endpoint
+      artifacts:
+        code:
+          type: iaas.artifacts.Zip
+          file: TransformData.zip
+  relationship_templates:
+    con_HostedOn_2:
+      type: tosca.relationships.HostedOn
+    con_HostedOn_3:
+      type: tosca.relationships.HostedOn
+    con_HostedOn_0:
+      type: tosca.relationships.HostedOn
+    con_HostedOn_1:
+      type: tosca.relationships.HostedOn
+    con_ConnectsTo_2:
+      type: tosca.relationships.ConnectsTo
+    con_Groups_6:
+      type: iaas.relationships.azure.Groups
+    con_ConnectsTo_3:
+      type: tosca.relationships.ConnectsTo
+    con_AzureBlobContainerTriggers_0:
+      type: iaas.relationships.azure.AzureBlobContainerTriggers
+    con_AzureDFOrchestrates_0:
+      type: iaas.relationships.azure.AzureDFOrchestrates
+    con_AzureDFOrchestrates_2:
+      type: iaas.relationships.azure.AzureDFOrchestrates
+    con_ConnectsTo_0:
+      type: tosca.relationships.ConnectsTo
+    con_AzureDFOrchestrates_1:
+      type: iaas.relationships.azure.AzureDFOrchestrates
+    con_ConnectsTo_1:
+      type: tosca.relationships.ConnectsTo
+    con_AzureDFOrchestrates_3:
+      type: iaas.relationships.azure.AzureDFOrchestrates
+    con_Groups_1:
+      type: iaas.relationships.azure.Groups
+    con_Groups_0:
+      type: iaas.relationships.azure.Groups
+    con_Groups_3:
+      type: iaas.relationships.azure.Groups
+    con_AzureDFClientFunctionTriggers_0:
+      type: iaas.relationships.azure.AzureDFClientFunctionTriggers
+    con_Groups_2:
+      type: iaas.relationships.azure.Groups
+    con_Groups_5:
+      type: iaas.relationships.azure.Groups
+    con_Groups_4:
+      type: iaas.relationships.azure.Groups
