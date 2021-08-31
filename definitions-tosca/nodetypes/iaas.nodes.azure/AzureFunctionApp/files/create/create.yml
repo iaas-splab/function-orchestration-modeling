@@ -1,0 +1,46 @@
+---
+- hosts: localhost
+  vars:
+    - tmp_app_path: "/tmp/functionapps"
+  tasks:
+    - name: Create folder for the functionapp
+      file:
+        path: "{{ tmp_app_path }}/{{ name }}"
+        state: directory
+
+    - name: Copy host file
+      copy:
+        src: "{{ host_file }}"
+        dest: "{{ tmp_app_path }}/{{ name }}"
+
+    - name: Copy and extract dependencies into the root of the functionapp folder
+      unarchive:
+        src: "{{ dependencies }}"
+        dest: "{{ tmp_app_path }}/{{ name }}"
+      when: dependencies is defined
+
+    - name: Pack function app files as a zip
+      archive:
+        path: "{{ tmp_app_path }}/{{ name }}/*"
+        dest: "{{ tmp_app_path }}/{{ name }}.zip"
+        format: zip
+
+    - name: Create function app
+      command: >-
+        az functionapp create --name {{ name }} 
+        --storage-account {{ storage_account }} 
+        --consumption-plan-location {{ region }} 
+        --resource-group {{ resource_group }} 
+        --functions-version 3
+        --runtime {{ runtime }}
+        --runtime-version {{ runtime_version }}
+        --os-type Linux
+
+    - name: Zip push deployment
+      command: >- 
+        az functionapp deployment source config-zip 
+        -g {{ resource_group }} 
+        -n {{ name }}
+        --src {{ tmp_app_path }}/{{ name }}.zip
+        --build-remote true
+    

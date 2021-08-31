@@ -1,0 +1,154 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.aws.AwsLambdaFunction:
+    derived_from: iaas.nodes.abstract.Function
+    metadata:
+      targetNamespace: "iaas.nodes.aws"
+      abstract: "false"
+      final: "false"
+    attributes:
+      function_name:
+        description: AWS function's name
+        type: string
+      function_alias:
+        description: AWS function's name
+        type: string
+      role_arn:
+        description: AWS function's role ARN
+        type: string
+      arn:
+        description: AWS function's Amazon Resource Name (ARN)
+        type: string
+      region:
+        type: string
+    properties:
+      handler:
+        type: string
+        description: Handler for lambda function
+        default: "index.handler"
+      memory:
+        type: integer
+        description: Function memory in MB
+        default: 256
+      runtime:
+        type: string
+        description: Function runtime (List of possible values - https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html)
+        default: "nodejs"
+        constraints:
+          - valid_values: [ nodejs, nodejs4.3, nodejs6.10, nodejs8.10, nodejs10.x, nodejs12.x, java8, python2.7, python3.6, python3.7, python3.8, dotnetcore1.0, dotnetcore2.0, dotnetcore2.1, nodejs4.3-edge, go1.x, ruby2.5 ]
+      alias:
+        type: string
+        description: Lambda function's alias
+        required: false
+        default: "dev"
+      statement_id:
+        type: string
+        description: Lambda policy statement identifier
+      zip_file:
+        type: string
+        description: path to a function zip file
+      timeout:
+        type: integer
+        description: Function timeout in seconds
+        default: 300
+      env_vars:
+        type: map
+        description: Function's environment variables
+        required: false
+        entry_schema:
+          type: string
+      layers:
+        type: list
+        description: List of Lambda layer ARNs for dependency management
+        required: false
+        entry_schema:
+          type: string
+      schedule_expression:
+        type: string
+        description: Cron or rate expression to create a CloudWatch event rule for this function
+        required: false
+        default: "none"
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.aws.AwsPlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+    capabilities:
+      orchestrated:
+        occurrences: [ 0, UNBOUNDED ]
+        type: iaas.capabilities.Orchestrated
+        valid_source_types: [ iaas.nodes.aws.AwsSFOrchestration ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          aws_region:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, region ] }
+          role_arn:
+            type: string
+            required: true
+            default: { get_attribute: [ SELF, host, role_arn ] }
+          lambda_runtime:
+            type: string
+            required: true
+            default: { get_property: [ SELF, runtime ] }
+          function_name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, name ] }
+          lambda_timeout:
+            type: integer
+            required: true
+            default: { get_property: [ SELF, timeout ] }
+          lambda_memory:
+            type: integer
+            required: true
+            default: { get_property: [ SELF, memory ] }
+          func_alias:
+            type: string
+            required: true
+            default: { get_property: [ SELF, alias ] }
+          permission_id:
+            type: string
+            required: true
+            default: { get_property: [ SELF, statement_id ] }
+          lambda_handler:
+            type: string
+            required: true
+            default: { get_property: [ SELF, handler ] }
+          zip_file:
+            type: string
+            required: true
+            default: { get_property: [ SELF, zip_file ] }
+          env_vars:
+            type: string
+            required: false
+            default: { get_property: [ SELF, env_vars ] }
+          layers:
+            type: string
+            required: false
+            default: { get_property: [ SELF, layers ] }
+          schedule_expression:
+            type: string
+            required: false
+            default: { get_property: [ SELF, schedule_expression ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

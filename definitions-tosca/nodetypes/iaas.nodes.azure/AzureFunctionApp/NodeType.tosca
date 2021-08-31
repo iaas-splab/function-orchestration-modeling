@@ -1,0 +1,90 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.azure.AzureFunctionApp:
+    derived_from: tosca.nodes.Root
+    metadata:
+      targetNamespace: "iaas.nodes.azure"
+      abstract: "false"
+      final: "false"
+    properties:
+      name:
+        type: string
+        description: The name of the function app
+      runtime:
+        type: string
+        description: Functionapp's runtime (see https://docs.microsoft.com/en-us/cli/azure/functionapp?view=azure-cli-latest#az_functionapp_create)
+        constraints:
+          - valid_values: [ custom, dotnet, dotnet-isolated, java, node, powershell, python ]
+      runtime_version:
+        type: string
+        description: Functionapp's runtime version (see https://docs.microsoft.com/en-us/cli/azure/functionapp?view=azure-cli-latest#az_functionapp_create)
+      host_file:
+        type: string
+        description: The path to runtime-specific configurations of the function app
+      dependencies_zip:
+        type: string
+        description: The path to archive with file dependencies required for the function app
+        required: false
+    requirements:
+      - grouping:
+          capability: iaas.capabilities.Grouped
+          relationship: iaas.relationships.azure.Groups
+          occurrences: [ 1, UNBOUNDED ]
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.azure.AzurePlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, name ] }
+          host_file:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host_file ] }
+          resource_group:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, resource_group ] }
+          storage_account:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, storage_account ] }
+          region:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, region ] }
+          dependencies:
+            type: string
+            required: false
+            default: { get_property: [ SELF, dependencies_zip ] }
+          runtime:
+            type: string
+            required: false
+            default: { get_property: [ SELF, runtime ] }
+          runtime_version:
+            type: string
+            required: false
+            default: { get_property: [ SELF, runtime_version ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

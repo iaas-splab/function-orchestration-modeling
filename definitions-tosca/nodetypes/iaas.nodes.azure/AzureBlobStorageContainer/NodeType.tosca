@@ -1,0 +1,59 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.azure.AzureBlobStorageContainer:
+    derived_from: iaas.nodes.abstract.ObjectStorage
+    metadata:
+      targetNamespace: "iaas.nodes.azure"
+      abstract: "false"
+      final: "false"
+    properties:
+      name:
+        type: string
+        description: The name of the blob storage container
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.azure.AzurePlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+      - invoker:
+          capability: iaas.capabilities.Invocable
+          node: iaas.nodes.azure.AzureFunction
+          relationship: iaas.relationships.azure.AzureBlobContainerTriggers
+          occurrences: [ 0, UNBOUNDED ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          name:
+            type: string
+            required: true
+            description: The name of the new Azure container
+            default: { get_property: [ SELF, name ] }
+          resource_group:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, resource_group ] }
+          storage_account:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, storage_account ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+            description: The standard create operation
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+            description: The standard delete operation
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml        
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

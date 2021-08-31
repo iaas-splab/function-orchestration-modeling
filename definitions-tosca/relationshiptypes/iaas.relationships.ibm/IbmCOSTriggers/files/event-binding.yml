@@ -1,0 +1,17 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Target IBM Cloud Function namespace "{{ namespace }}"
+      command: ibmcloud fn namespace target {{ namespace }}
+    
+    - name: create the COS trigger
+      command: >-
+        ibmcloud fn trigger create {{ bucket_name }}-cosTrigger 
+        --feed /whisk.system/cos/changes
+        --param bucket {{ bucket_name }}
+        --param event_types {{ events }}
+    
+    - name: create the COS trigger rule
+      command:  ibmcloud fn rule create {{ bucket_name }}-cosTriggerRule {{ bucket_name }}-cosTrigger {{ function_name }}
+
+       

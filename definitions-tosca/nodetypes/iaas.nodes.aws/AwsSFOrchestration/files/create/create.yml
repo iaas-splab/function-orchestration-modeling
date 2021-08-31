@@ -1,0 +1,19 @@
+---
+- hosts: all
+  vars:
+    - temp: "/tmp"
+  tasks:
+    - name: Check that the state machine file exists
+      stat:
+        path: "{{ state_machine }}"
+      register: state_machine_definition
+
+    - name: Copy file to a remote machine
+      copy:
+        src: "{{ state_machine }}"
+        dest: "{{ temp }}"
+    
+    - name: Set attributes
+      set_stats:
+        data:
+          state_machine: "{{ state_machine }}"

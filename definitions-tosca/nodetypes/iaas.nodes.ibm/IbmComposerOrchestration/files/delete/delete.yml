@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Delete IBM Cloud Function "{{ name }}"
+      command: ibmcloud fn action delete {{ name }}
+
+    - name: delete the schedule-based trigger if present
+      command: ibmcloud fn trigger delete {{ name | lower | replace('_','') }}-timer
+      when: (schedule_expression is defined) and (schedule_expression != "none")
+
+    - name: delete the rule for scedule-based trigger if present
+      command: ibmcloud fn rule delete {{ name | lower | replace('_','') }}-timerrule --disable
+      when: (schedule_expression is defined) and (schedule_expression != "none")

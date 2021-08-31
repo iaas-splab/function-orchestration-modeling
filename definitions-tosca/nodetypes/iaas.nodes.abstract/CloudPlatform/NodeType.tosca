@@ -1,0 +1,17 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.abstract.CloudPlatform:
+    derived_from: tosca.nodes.Root
+    metadata:
+      targetNamespace: "iaas.nodes.abstract"
+      abstract: "false"
+      final: "false"
+    properties:
+      name:
+        type: string
+        required: false
+    capabilities:
+      host:
+        occurrences: [ 1, UNBOUNDED ]
+        type: tosca.capabilities.Container

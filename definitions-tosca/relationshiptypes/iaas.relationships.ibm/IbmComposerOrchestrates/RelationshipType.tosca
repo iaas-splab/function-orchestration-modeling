@@ -1,0 +1,10 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+relationship_types:
+  iaas.relationships.ibm.IbmComposerOrchestrates:
+    description: IBM-specific relationship type representing connections between IBM Composer and orchestrated resources such as IBM Cloud Functions
+    derived_from: iaas.relationships.abstract.Orchestrates
+    metadata:
+      targetNamespace: "iaas.relationships.ibm"
+      abstract: "false"
+      final: "false"    

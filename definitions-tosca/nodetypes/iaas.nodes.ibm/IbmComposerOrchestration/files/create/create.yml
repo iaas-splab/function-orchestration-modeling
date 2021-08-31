@@ -1,0 +1,35 @@
+---
+- hosts: all
+  vars:
+    generated_wf: "{{ workflow }}on"
+  tasks:
+    - name: Target IBM Cloud Function namespace "{{ namespace }}"
+      command: ibmcloud fn namespace target {{ namespace }}
+
+    - name: generate the deployable workflow using composer library
+      command: compose {{ workflow }} --file
+
+    - name: deploy the generated workflow
+      command: >-
+        deploy {{ name }} {{ generated_wf }}
+        --memory {{ memory }}
+        --timeout {{ timeout }}
+        --kind {{ runtime }}
+        --overwrite
+    
+    - name: Set parameters if present
+      command: ibmcloud fn action update {{ name }} -P {{ function_parameters }}
+      when: (function_parameters is defined) and (function_parameters != "none")
+
+    - name: create the schedule-based trigger if present
+      command: >-
+        ibmcloud fn trigger create {{ name | lower | replace('_','') }}-timer
+        --feed /whisk.system/alarms/alarm
+        --param cron "{{ schedule_expression }}"
+      when: (schedule_expression is defined) and (schedule_expression != "none")
+
+    - name: create the rule for scedule-based trigger if present
+      command: ibmcloud fn rule create {{ name | lower | replace('_','') }}-timerrule {{ name | lower | replace('_','') }}-timer {{ name }}
+      when: (schedule_expression is defined) and (schedule_expression != "none")
+    
+

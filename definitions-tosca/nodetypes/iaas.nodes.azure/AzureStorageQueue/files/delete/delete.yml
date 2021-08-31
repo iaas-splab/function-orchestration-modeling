@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Delete blob storage container
+      command: az storage queue delete -n {{ queue_name }} --account-name {{ storage_account }}
+    

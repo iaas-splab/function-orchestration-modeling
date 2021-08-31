@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Create storage queue
+      command: az storage queue create -n {{ queue_name }} --account-name {{ storage_account }}
+    

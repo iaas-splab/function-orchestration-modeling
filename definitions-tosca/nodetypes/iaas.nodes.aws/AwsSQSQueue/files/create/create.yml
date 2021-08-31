@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create SQS queue "{{ queue_name }}"
+      community.aws.sqs_queue:
+        name: "{{ queue_name }}"
+        region: "{{ aws_region }}"
+      register: queue_info
+    
+    - name: Set attributes
+      set_stats:
+        data:
+          arn: "{{ queue_info.queue_arn }}"
+          queue_url: "{{ queue_info.queue_url }}"
+          region: "{{ aws_region }}"          

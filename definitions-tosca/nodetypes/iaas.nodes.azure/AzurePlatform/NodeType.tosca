@@ -1,0 +1,94 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.azure.AzurePlatform:
+    derived_from: iaas.nodes.abstract.CloudPlatform
+    metadata:
+      targetNamespace: "iaas.nodes.azure"
+      abstract: "false"
+      final: "false"
+    properties:
+      name:
+        type: string
+        default: "Azure"      
+      region:
+        type: string
+      resource_group:
+        type: string
+        description: The name of the new Azure resource group
+      storage_account:
+        type: string
+        description: The name of the new Azure storage account
+      account_type:
+        type: string
+        required: true
+        description: The type of Azure storage account (see https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts)
+        default: "Standard_RAGRS"
+        constraints:
+          - valid_values: [ Premium_LRS, Standard_GRS, Standard_LRS, Standard_RAGRS, Standard_ZRS, Premium_ZRS ]
+      access_tier:
+        type: string
+        required: true
+        description: The access tier for this storage account (see https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-storage-tiers)
+        default: "Hot"
+        constraints:
+          - valid_values: [ Hot, Cool ]
+      storage_kind:
+        type: string
+        required: true
+        description: The kind of Azure storage
+        default: "StorageV2"
+        constraints:
+          - valid_values: [ Storage, StorageV2, BlobStorage, BlockBlobStorage, FileStorage ]
+    capabilities:
+      host:
+        occurrences: [ 1, UNBOUNDED ]
+        valid_source_types: [ iaas.nodes.azure.AzureFunctionApp, iaas.nodes.azure.AzureBlobStorageContainer, iaas.nodes.azure.AzureStorageQueue ]
+        type: tosca.capabilities.Container
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          region:
+            type: string
+            required: true
+            default: { get_property: [ SELF, region ] }
+          resource_group:
+            type: string
+            required: true
+            default: { get_property: [ SELF, resource_group ] }
+          storage_account:
+            type: string
+            required: true
+            default: { get_property: [ SELF, storage_account ] }
+          account_type:
+            type: string
+            required: true
+            description: The type of Azure storage account
+            default: { get_property: [ SELF, account_type ] }
+          access_tier:
+            type: string
+            required: true
+            description: The access tier for this storage account
+            default: { get_property: [ SELF, access_tier ] }
+          storage_kind:
+            type: string
+            required: true
+            description: The kind of Azure storage
+            default: { get_property: [ SELF, storage_kind ] }
+        operations:
+          configure:
+            implementation:
+              primary: configure
+              timeout: 0
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+    artifacts:
+      configure:
+        type: iaas.artifacts.Ansible
+        file: configure.yml
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

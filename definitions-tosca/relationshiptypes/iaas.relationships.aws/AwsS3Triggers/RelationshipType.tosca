@@ -1,0 +1,53 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+relationship_types:
+  iaas.relationships.aws.AwsS3Triggers:
+    description: AWS-specific relationship type representing AwsS3-to-AwsLambdaFunction communication
+    derived_from: iaas.relationships.abstract.Triggers
+    metadata:
+      targetNamespace: "iaas.relationships.aws"
+      abstract: "false"
+      final: "false"
+    properties:
+      event_name:
+        type: string
+      events:
+        type: string
+        description: List of events
+    interfaces:
+      Configure:
+        type: tosca.interfaces.relationship.Configure
+        inputs:
+          aws_region:
+            type: string
+            required: true
+            default: { get_attribute: [ SOURCE, region ] }
+          bucket_name:
+            type: string
+            required: true
+            default: { get_attribute: [ SOURCE, bucket_name ] }
+          function_arn:
+            type: string
+            required: true
+            default: { get_attribute: [ TARGET, arn ] }
+          function_name:
+            type: string
+            required: true
+            default: { get_attribute: [ TARGET, function_name ] }
+          function_alias:
+            type: string
+            required: true
+            default: { get_attribute: [ TARGET, function_alias ] }
+          event_name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, event_name ] }
+          events:
+            type: string
+            required: true
+            default: { get_property: [ SELF, events ] }
+        operations:
+          post_configure_source:
+            implementation:
+              primary: event-binding.yml
+              timeout: 0

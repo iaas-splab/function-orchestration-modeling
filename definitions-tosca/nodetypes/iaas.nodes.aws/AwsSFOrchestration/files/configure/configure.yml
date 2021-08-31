@@ -1,0 +1,21 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Deploy AWS Step Functions state machine "{{ name }}"
+      community.aws.aws_step_functions_state_machine:
+        name: "{{ name }}"
+        definition: "{{ lookup('file', '/tmp/' + state_machine) }}"
+        role_arn: "{{ role_arn }}"
+      register: workflow_info
+    
+    - name: Create a CloudWatch rule to enable a scheduled invocation of this workflow
+      community.aws.cloudwatchevent_rule:
+        name: "{{ name }}-EventBridgeRule"
+        region: "{{ aws_region }}"
+        schedule_expression: "{{ schedule_expression }}"        
+        targets: 
+          - id: "{{ name }}-TargetId"
+            arn: "{{ workflow_info.state_machine_arn }}"
+            role_arn: "{{ role_arn }}"
+      when: (schedule_expression is defined) and (schedule_expression != "none")
+      register: cwevent

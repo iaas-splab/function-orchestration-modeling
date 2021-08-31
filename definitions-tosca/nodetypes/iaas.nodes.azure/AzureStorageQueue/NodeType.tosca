@@ -1,0 +1,43 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.azure.AzureStorageQueue:
+    derived_from: iaas.nodes.abstract.Queue
+    metadata:
+      targetNamespace: "iaas.nodes.azure"
+      abstract: "false"
+      final: "false"
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.azure.AzurePlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          queue_name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, name ] }
+          storage_account:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, storage_account ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

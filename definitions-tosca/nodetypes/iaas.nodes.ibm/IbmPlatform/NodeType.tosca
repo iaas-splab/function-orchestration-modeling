@@ -1,0 +1,49 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.ibm.IbmPlatform:
+    derived_from: iaas.nodes.abstract.CloudPlatform
+    metadata:
+      targetNamespace: "iaas.nodes.ibm"
+      abstract: "false"
+      final: "false"
+    properties:
+      name:
+        type: string
+        default: "IBM"
+      region:
+        type: string
+      resource_group:
+        type: string
+      cos_crn:
+        type: string
+    capabilities:
+      host:
+        occurrences: [ 1, UNBOUNDED ]
+        valid_source_types: [ iaas.nodes.ibm.IbmCloudFunction, iaas.nodes.ibm.IbmObjectStorageBucket, iaas.nodes.ibm.IbmComposerOrchestration, iaas.nodes.ibm.IbmMQQueue ]
+        type: tosca.capabilities.Container
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          region:
+            type: string
+            required: true
+            default: { get_property: [ SELF, region ] }
+          resource_group:
+            type: string
+            required: true
+            default: { get_property: [ SELF, resource_group ] }
+          cos_crn:
+            type: string
+            required: true
+            default: { get_property: [ SELF, cos_crn ] }
+        operations:
+          configure:
+            implementation:
+              primary: configure
+              timeout: 0
+    artifacts:
+      configure:
+        type: iaas.artifacts.Ansible
+        file: configure.yml

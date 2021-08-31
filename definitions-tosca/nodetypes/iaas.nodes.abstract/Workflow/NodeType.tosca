@@ -1,0 +1,22 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.abstract.Workflow:
+    derived_from: tosca.nodes.Root
+    metadata:
+      targetNamespace: "iaas.nodes.abstract"
+      abstract: "false"
+      final: "false"
+    properties:
+      name:
+        type: string
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.abstract.CloudPlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+      - orchestrator:
+          capability: iaas.capabilities.Orchestrated
+          relationship: iaas.relationships.abstract.Orchestrates
+          occurrences: [ 0, UNBOUNDED ]

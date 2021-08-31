@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Delete IBM Cloud Object Storage Bucket "{{ name }}"
+      command: ibmcloud cos bucket-delete --bucket {{ name }} --force

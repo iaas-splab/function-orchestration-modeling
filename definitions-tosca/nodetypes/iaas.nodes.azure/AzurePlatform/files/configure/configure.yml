@@ -1,0 +1,49 @@
+---
+- name: configure Azure deployment
+  hosts: localhost
+  gather_facts: false
+  vars:
+    virtualenv_path: "{{ lookup('env', 'VIRTUAL_ENV') }}"
+    client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
+    secret: "{{ lookup('env', 'AZURE_SECRET') }}"
+    subscription_id: "{{ lookup('env', 'AZURE_SUBSCRIPTION_ID') }}"
+    tenant: "{{ lookup('env', 'AZURE_TENANT') }}"
+    pip_args: '--user'
+    tmp_app_path: "/tmp/functionapps"
+  tasks:
+    - name: Delete old files for previous deployments
+      file:
+        state: absent
+        path: "{{ tmp_app_path }}"
+    
+    - name: Create temporary folder for function apps
+      file:
+        path: "{{ tmp_app_path }}"
+        state: directory
+
+    - name: Prepare environment flags if run in virtualenv
+      set_fact:
+        pip_args: ''
+      when: virtualenv_path | length > 0
+
+    - name: Install Azure CLI from PyPI
+      pip:
+        name: azure-cli
+        extra_args: "{{ pip_args }}"
+    
+    - name: login using azure cli ( CLI must be installed with all required plugins)
+      command: az login --service-principal -u {{ client_id }} -p {{ secret }} --tenant {{ tenant }}
+
+    - name: Create a new Azure resource group
+      command: az group create -l {{ region }} -n {{ resource_group }}
+
+    - name: Create a new Azure storage account
+      command: >- 
+        az storage account create -n {{ storage_account }} -g {{ resource_group }}
+        --kind {{ storage_kind }}
+        -l {{ region }}
+        --access-tier {{ access_tier }}
+        --sku {{ account_type }}   
+    
+
+    

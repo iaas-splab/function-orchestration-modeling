@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create IBM Cloud Object Storage Bucket "{{ name }}"
+      command: ibmcloud cos bucket-create --bucket {{ name }}
+    
+    - name: Set attributes
+      set_stats:
+        data:
+          bucket_name: "{{ name }}"

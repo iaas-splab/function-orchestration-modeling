@@ -1,0 +1,20 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.abstract.ObjectStorage:
+    derived_from: tosca.nodes.Storage.ObjectStorage
+    metadata:
+      targetNamespace: "iaas.nodes.abstract"
+      abstract: "false"
+      final: "false"
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.abstract.CloudPlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+      - invoker:
+          capability: iaas.capabilities.Invocable
+          node: iaas.nodes.abstract.Function
+          relationship: iaas.relationships.abstract.Triggers
+          occurrences: [ 0, UNBOUNDED ]

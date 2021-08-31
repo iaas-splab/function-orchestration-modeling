@@ -1,0 +1,14 @@
+---
+- name: configure IBM deployment
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: login using ibmcloud CLI ( CLI mus be installed with all required plugins)
+      command: ibmcloud login -r {{ region }}
+    
+    - name: target resource group
+      command: ibmcloud target -g {{ resource_group }}
+
+    - name: configure IBM Cloud Object Storage CRN
+      command: ibmcloud cos config crn --crn {{ cos_crn }}

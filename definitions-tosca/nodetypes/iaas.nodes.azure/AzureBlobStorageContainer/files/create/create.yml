@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Create blob storage container
+      command: az storage container create -n {{ name }} --account-name {{ storage_account }} -g {{ resource_group }}
+    

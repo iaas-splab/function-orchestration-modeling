@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Delete function app
+      command: az functionapp delete --name {{ name }} --resource-group {{ resource_group }}

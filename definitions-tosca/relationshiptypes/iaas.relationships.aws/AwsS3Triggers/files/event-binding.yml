@@ -1,0 +1,20 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Add invocation permission of Lambda function {{ function_name }}"
+      lambda_policy:
+        function_name: "{{ function_name }}"
+        statement_id: "s3-lambda-invoke-{{ 99999999 | random | to_uuid }}"
+        action: lambda:InvokeFunction
+        region: "{{ aws_region }}"
+        alias: "{{ function_alias }}"
+        principal: "s3.amazonaws.com"
+
+    - name: Set bucket notification
+      s3_bucket_notification:
+        state: present
+        event_name: "{{ event_name }}"
+        bucket_name: "{{ bucket_name }}"
+        lambda_function_arn: "{{ function_arn }}"
+        events: ["{{ events }}"]
+        region: "{{ aws_region }}"

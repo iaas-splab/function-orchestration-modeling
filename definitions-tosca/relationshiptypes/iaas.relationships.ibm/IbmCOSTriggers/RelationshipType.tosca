@@ -1,0 +1,41 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+relationship_types:
+  iaas.relationships.ibm.IbmCOSTriggers:
+    description: IBM-specific relationship type representing COS-to-CloudFunction communication
+    derived_from: iaas.relationships.abstract.Triggers
+    metadata:
+      targetNamespace: "iaas.relationships.ibm"
+      abstract: "false"
+      final: "false"
+    properties:
+      events:
+        type: string
+        description: List of events
+        constraints:
+          - valid_values: [ write, delete, all ]
+    interfaces:
+      Configure:
+        type: tosca.interfaces.relationship.Configure
+        inputs:
+          bucket_name:
+            type: string
+            required: true
+            default: { get_attribute: [ SOURCE, bucket_name ] }
+          function_name:
+            type: string
+            required: true
+            default: { get_attribute: [ TARGET, function_name ] }
+          namespace:
+            type: string
+            required: true
+            default: { get_property: [ TARGET, namespace ] }          
+          events:
+            type: string
+            required: true
+            default: { get_property: [ SELF, events ] }
+        operations:
+          post_configure_source:
+            implementation:
+              primary: event-binding.yml
+              timeout: 0

@@ -1,0 +1,78 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.aws.AwsSFOrchestration:
+    derived_from: iaas.nodes.abstract.Workflow
+    metadata:
+      targetNamespace: "iaas.nodes.aws"
+      abstract: "false"
+      final: "false"
+    attributes:
+      state_machine:
+        type: string
+    properties:
+      state_machine:
+        type: string
+        description: the Amazon States Language definition of the state machine
+      schedule_expression:
+        type: string
+        description: Cron or rate expression to create a CloudWatch event rule for this function
+        required: false
+        default: "none"
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.aws.AwsPlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+      - orchestrator:
+          capability: iaas.capabilities.Orchestrated
+          relationship: iaas.relationships.aws.AwsSFOrchestrates
+          occurrences: [ 0, UNBOUNDED ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          aws_region:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, region ] }
+          name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, name ] }
+          role_arn:
+            type: string
+            required: true
+            default: { get_attribute: [ SELF, host, role_arn ] }
+          state_machine:
+            type: string
+            required: true
+            default: { get_property: [ SELF, state_machine ] }
+          schedule_expression:
+            type: string
+            required: false
+            default: { get_property: [ SELF, schedule_expression ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+          configure:
+            implementation:
+              primary: configure
+              timeout: 0
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml
+      configure:
+        type: iaas.artifacts.Ansible
+        file: configure.yml
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

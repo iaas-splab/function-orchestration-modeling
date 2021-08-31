@@ -1,0 +1,5 @@
+TOSCA Definitions for Function Orchestration Modeling
+Copyright 2021 IAAS
+
+Some abstract and AWS-specific modeling constructs are derived from, or inspired by RADON Particles (https://github.com/radon-h2020/radon-particles).
+Copyright 2019 - 2021 RADON Consortium.

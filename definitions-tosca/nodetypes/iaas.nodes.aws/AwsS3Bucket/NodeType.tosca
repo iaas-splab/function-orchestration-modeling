@@ -1,0 +1,59 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.aws.AwsS3Bucket:
+    derived_from: iaas.nodes.abstract.ObjectStorage
+    metadata:
+      targetNamespace: "iaas.nodes.aws"
+      abstract: "false"
+      final: "false"
+    attributes:
+      bucket_name:
+        type: string
+      region:
+        type: string
+      bucket_url_path:
+        type: string
+        description: URL of the bucket using path-style access (https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-bucket-intro.html)
+      bucket_url_vhost:
+        type: string
+        description: URL of the bucket using virtual-hosted-style access (https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-bucket-intro.html)
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.aws.AwsPlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+      - invoker:
+          capability: iaas.capabilities.Invocable
+          node: iaas.nodes.aws.AwsLambdaFunction
+          relationship: iaas.relationships.aws.AwsS3Triggers
+          occurrences: [ 0, UNBOUNDED ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          aws_region:
+            type: string
+            required: true
+            default: { get_property: [ SELF, host, region ] }
+          bucket_name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, name ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

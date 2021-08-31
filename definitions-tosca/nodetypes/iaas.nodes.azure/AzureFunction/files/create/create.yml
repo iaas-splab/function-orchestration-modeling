@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  vars:
+    - tmp_app_path: "/tmp/functionapps"
+  tasks:
+    - name: Create function directory
+      file:
+        path: "{{ tmp_app_path }}/{{ functionapp_name }}/{{ name }}"
+        state: directory
+
+    - name: Copy and extract dependencies into the root of the functionapp folder
+      unarchive:
+        src: "{{ code_path }}"
+        dest: "{{ tmp_app_path }}/{{ functionapp_name }}/{{ name }}"

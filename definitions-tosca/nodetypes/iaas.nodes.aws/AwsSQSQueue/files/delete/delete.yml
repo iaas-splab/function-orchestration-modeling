@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Delete SQS queue "{{ queue_name }}"
+      community.aws.sqs_queue:
+        name: "{{ queue_name }}"
+        region: "{{ aws_region }}"
+        state: absent

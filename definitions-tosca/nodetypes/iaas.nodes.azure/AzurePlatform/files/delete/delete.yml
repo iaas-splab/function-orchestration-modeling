@@ -1,0 +1,31 @@
+---
+- name: configure Azure deployment
+  hosts: localhost
+  gather_facts: false
+  vars:
+    virtualenv_path: "{{ lookup('env', 'VIRTUAL_ENV') }}"
+    client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
+    secret: "{{ lookup('env', 'AZURE_SECRET') }}"
+    subscription_id: "{{ lookup('env', 'AZURE_SUBSCRIPTION_ID') }}"
+    tenant: "{{ lookup('env', 'AZURE_TENANT') }}"
+    pip_args: '--user'
+
+  tasks:
+    - name: Prepare environment flags if run in virtualenv
+      set_fact:
+        pip_args: ''
+      when: virtualenv_path | length > 0
+
+    - name: Install Azure CLI from PyPI
+      pip:
+        name: azure-cli
+        extra_args: "{{ pip_args }}"
+    
+    - name: login using azure cli ( CLI must be installed with all required plugins)
+      command: az login --service-principal -u {{ client_id }} -p {{ secret }} --tenant {{ tenant }}
+
+    - name: Remove Azure resource group
+      command: az group delete -n {{ resource_group }} --yes
+
+    - name: Remove Azure storage account
+      command: az storage account delete -n {{ storage_account }} --yes

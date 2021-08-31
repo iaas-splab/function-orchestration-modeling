@@ -1,0 +1,9 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+relationship_types:
+  iaas.relationships.azure.Groups:
+    derived_from: tosca.relationships.DependsOn
+    metadata:
+      targetNamespace: "iaas.relationships.azure"
+      abstract: "false"
+      final: "false"

@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create queue
+      uri:
+        method: POST
+        headers:
+          Authorization: "Basic {{ lookup('env', 'IBMMQ_BASIC_AUTH_STRING') }}"
+          Content-Type: "application/json"
+          ibm-mq-rest-csrf-token: "ignored_because_basicauth_is_used"
+        url: "{{ lookup('env', 'IBMMQ_ADMINISTRATIVE_ENDPOINT') }}"
+        body: "{\"name\":\"{{ queue_name }}\"}"
+        body_format: json
+        return_content: yes
+        status_code: 201

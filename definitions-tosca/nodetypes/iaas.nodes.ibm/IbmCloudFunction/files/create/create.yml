@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Target IBM Cloud Function namespace "{{ namespace }}"
+      command: ibmcloud fn namespace target {{ namespace }}
+
+    - name: Create IBM Cloud Function "{{ name }}"
+      command: >-
+        ibmcloud fn action create {{ name }} {{ code_path }}
+        --kind {{ runtime }}
+        --main {{ handler }}
+        --memory {{ memory }}
+        --timeout {{ timeout }}
+
+    - name: Set parameters if present
+      command: ibmcloud fn action update {{ name }} -P {{ function_parameters }}
+      when: (function_parameters is defined) and (function_parameters != "none")
+    
+    - name: Set attributes
+      set_stats:
+        data:
+          function_name: "{{ name }}"

@@ -1,0 +1,52 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.azure.AzureFunction:
+    derived_from: iaas.nodes.abstract.Function
+    metadata:
+      targetNamespace: "iaas.nodes.azure"
+      abstract: "false"
+      final: "false"
+    properties:
+      zip_file:
+        type: string
+        description: The file path of code to execute (and function.json for certain languages)
+      functionapp_name:
+        type: string
+        description: FunctionApp name
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.azure.AzurePlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 0, 1 ]
+    capabilities:
+      grouped:
+        type: iaas.capabilities.Grouped
+        valid_source_types: [ iaas.nodes.azure.AzureFunctionApp ]
+        occurrences: [ 1, 1 ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, name ] }
+          code_path:
+            type: string
+            required: true
+            default: { get_property: [ SELF, zip_file ] }
+          functionapp_name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, functionapp_name ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml

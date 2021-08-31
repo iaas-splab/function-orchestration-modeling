@@ -1,0 +1,104 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  iaas.nodes.ibm.IbmComposerOrchestration:
+    derived_from: iaas.nodes.abstract.Workflow
+    metadata:
+      targetNamespace: "iaas.nodes.ibm"
+      abstract: "false"
+      final: "false"
+    attributes:
+      state_machine:
+        type: string
+    properties:
+      namespace:
+        type: string
+        description: The name of the function namespace
+      workflow:
+        type: string
+        description: the workflow definition in JavaScript
+      timeout:
+        type: integer
+        description: The timeout limit to terminate the action, specified in milliseconds
+        default: 900000
+      memory:
+        type: integer
+        description: The maximum memory for the action, specified in MBs
+        default: 256
+      runtime:
+        type: string
+        description: Orchestrating function's runtime
+        default: "nodejs:12"
+        constraints:
+          - valid_values: [ nodejs:12 ]
+      schedule_expression:
+        type: string
+        description: The cron expression to trigger the workflow
+        default: "none"
+      function_parameters:
+        type: string
+        required: false
+        description: The file path of optional json file with configuration parameters
+        default: "none"
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: iaas.nodes.ibm.IbmPlatform
+          relationship: tosca.relationships.HostedOn
+          occurrences: [ 1, 1 ]
+      - orchestrator:
+          capability: iaas.capabilities.Orchestrated
+          relationship: iaas.relationships.ibm.IbmComposerOrchestrates
+          occurrences: [ 0, UNBOUNDED ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        inputs:
+          name:
+            type: string
+            required: true
+            default: { get_property: [ SELF, name ] }
+          namespace:
+            type: string
+            required: true
+            default: { get_property: [ SELF, namespace ] }
+          workflow:
+            type: string
+            required: true
+            default: { get_property: [ SELF, workflow ] }
+          timeout:
+            type: string
+            required: true
+            default: { get_property: [ SELF, timeout ] }
+          memory:
+            type: string
+            required: true
+            default: { get_property: [ SELF, memory ] }
+          runtime:
+            type: string
+            required: true
+            default: { get_property: [ SELF, runtime ] }
+          schedule_expression:
+            type: string
+            required: false
+            default: { get_property: [ SELF, schedule_expression ] }
+          function_parameters:
+            type: string
+            required: false
+            default: { get_property: [ SELF, function_parameters ] }
+        operations:
+          create:
+            implementation:
+              primary: create
+              timeout: 0
+          delete:
+            implementation:
+              primary: delete
+              timeout: 0
+    artifacts:
+      create:
+        type: iaas.artifacts.Ansible
+        file: create.yml
+      delete:
+        type: iaas.artifacts.Ansible
+        file: delete.yml

@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Target IBM Cloud Function namespace "{{ namespace }}"
+      command: ibmcloud fn namespace target {{ namespace }}
+
+    - name: Delete IBM Cloud Function "{{ function_name }}"
+      command: ibmcloud fn action delete {{ name }}
+
